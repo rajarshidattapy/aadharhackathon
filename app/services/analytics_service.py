@@ -42,10 +42,37 @@ class AnalyticsService:
             try:
                 import joblib
                 from pathlib import Path
-                model_path = Path("migration_score_model.pkl")
-                thresh_path = Path("migration_thresholds.pkl")
-                if not model_path.exists() or not thresh_path.exists():
-                    raise FileNotFoundError("Trained model or thresholds file not found. Expected: migration_score_model.pkl and migration_thresholds.pkl")
+
+                # Derive repository root reliably from this file's location
+                repo_root = Path(__file__).resolve().parents[2]
+
+                # Candidates: repo/models, cwd/models, repo root, cwd
+                candidates = [
+                    repo_root / "models" / "migration_score_model.pkl",
+                    Path("models") / "migration_score_model.pkl",
+                    repo_root / "migration_score_model.pkl",
+                    Path("migration_score_model.pkl"),
+                ]
+                thresh_candidates = [
+                    repo_root / "models" / "migration_thresholds.pkl",
+                    Path("models") / "migration_thresholds.pkl",
+                    repo_root / "migration_thresholds.pkl",
+                    Path("migration_thresholds.pkl"),
+                ]
+
+                model_path = next((p for p in candidates if p.exists()), None)
+                thresh_path = next((p for p in thresh_candidates if p.exists()), None)
+
+                if model_path is None or thresh_path is None:
+                    searched = {
+                        "model_candidates": [str(p) for p in candidates],
+                        "threshold_candidates": [str(p) for p in thresh_candidates],
+                    }
+                    raise FileNotFoundError(
+                        f"Trained model or thresholds file not found. Searched: {searched}"
+                    )
+
+                # Load using resolved path
                 self._model = joblib.load(model_path)
                 self._thresholds = joblib.load(thresh_path)
             except Exception as exc:
