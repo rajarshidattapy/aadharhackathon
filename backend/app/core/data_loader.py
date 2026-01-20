@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List
+from typing import List, Union
 import os
 
 import pandas as pd
@@ -42,12 +42,30 @@ def _validate_non_empty(df: pd.DataFrame) -> None:
         raise DataValidationError("Dataset is empty after loading.")
 
 
+def _convert_huggingface_url(url: str) -> str:
+    """Convert Hugging Face blob URL to raw/resolve URL for direct download."""
+    if "huggingface.co" in url and "/blob/" in url:
+        return url.replace("/blob/", "/resolve/")
+    return url
+
+
+def _get_data_source(source: Union[str, Path]) -> Union[str, Path]:
+    """Get the data source, converting Hugging Face URLs if needed."""
+    if isinstance(source, str) and source.startswith("http"):
+        return _convert_huggingface_url(source)
+    return source
+
+
 # Resolve repo root reliably from this file's location:
 #   repo_root/backend/app/core/data_loader.py -> parents[3] == repo_root
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DATA_DIR = REPO_ROOT / "data"
+# Data file is located at backend/app/data/merged_aadhaar_data_sample.csv
+DATA_DIR = REPO_ROOT / "backend" / "app" / "data"
 _MERGED_CSV_ENV = os.environ.get("AADHAAR_MERGED_CSV")
-MERGED_AADHAAR_CSV = Path(_MERGED_CSV_ENV) if _MERGED_CSV_ENV else (DATA_DIR / "merged_aadhaar_data_sample.csv")
+_MERGED_CSV_SOURCE = _MERGED_CSV_ENV if _MERGED_CSV_ENV else (
+    "https://huggingface.co/datasets/mrmarvelous/aadharclean/resolve/main/merged_aadhaar_data_sample.csv"
+)
+MERGED_AADHAAR_CSV = _get_data_source(_MERGED_CSV_SOURCE)
 
 
 @lru_cache(maxsize=1)
@@ -58,7 +76,9 @@ def get_merged_aadhaar_dataframe() -> pd.DataFrame:
     - Parses date with dayfirst=True, errors='coerce'
     - Drops invalid dates
     - Adds `month` column as YYYY-MM
+    - Supports both local file paths and URLs (including Hugging Face datasets).
     """
+    # pd.read_csv handles both local paths and URLs
     df = pd.read_csv(MERGED_AADHAAR_CSV)
 
     if "date" in df.columns:
@@ -90,13 +110,20 @@ def get_dataset() -> pd.DataFrame:
     - Uses an LRU cache so the CSV is read only once per process lifetime.
     - Validates required columns and non-empty data.
     - Parses the date column and adds a `month` column in YYYY-MM format.
+    - Supports both local file paths and URLs (including Hugging Face datasets).
     """
 
-    path: Path = settings.data_file
-    if not path.exists():
-        raise FileNotFoundError(f"Data file not found at path: {path}")
-
-    df = pd.read_csv(path)
+    data_source = _get_data_source(settings.data_file)
+    
+    # Check if it's a local file path
+    if isinstance(data_source, Path) or (isinstance(data_source, str) and not data_source.startswith("http")):
+        path = Path(data_source)
+        if not path.exists():
+            raise FileNotFoundError(f"Data file not found at path: {path}")
+        df = pd.read_csv(path)
+    else:
+        # It's a URL - read directly from URL
+        df = pd.read_csv(data_source)
 
     _validate_non_empty(df)
     _validate_columns(df)

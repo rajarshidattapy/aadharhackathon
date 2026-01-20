@@ -1,3 +1,14 @@
+import os
+import sys
+from pathlib import Path
+import uvicorn
+# Add the project root to Python path to enable absolute imports
+# This allows running from backend/app/ or backend/ directory
+backend_dir = Path(__file__).parent.parent
+project_root = backend_dir.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 try:
     # Optional: allow local `backend/.env` (rename from env.example)
     from dotenv import load_dotenv
@@ -6,7 +17,6 @@ try:
 except Exception:
     pass
 
-import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -69,3 +79,5 @@ async def health_check() -> dict:
     """Simple health check endpoint."""
     return {"status": "ok"}
 
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8001)
