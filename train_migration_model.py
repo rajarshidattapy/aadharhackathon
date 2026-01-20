@@ -9,8 +9,8 @@ import joblib
 
 
 DATA_PATH = Path("data/merged_aadhaar_data_sample.csv")
-MODEL_PATH = Path("migration_score_model.pkl")
-THRESHOLDS_PATH = Path("migration_thresholds.pkl")
+MODEL_PATH = Path("models/migration_score_model.pkl")
+THRESHOLDS_PATH = Path("models/migration_thresholds.pkl")
 
 
 def build_aggregated_dataset(df: pd.DataFrame) -> pd.DataFrame:
