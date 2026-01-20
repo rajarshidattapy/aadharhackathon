@@ -40,20 +40,43 @@ def fetch_alerts(endpoint: str, month: Optional[str] = None, _backend_url: Optio
         params["month"] = month
 
     try:
-        response = requests.get(url, params=params, timeout=15)
+        # Use longer timeout for first request (data loading may take time)
+        # First request might need to download 158MB CSV file
+        timeout = 120 if not hasattr(fetch_alerts, '_first_request_done') else 30
+        response = requests.get(url, params=params, timeout=timeout)
+        fetch_alerts._first_request_done = True
         response.raise_for_status()
         return response.json()
     except requests.exceptions.Timeout:
-        raise Exception(f"Request timeout: The server took too long to respond")
+        raise Exception(
+            f"Request timeout: The server took too long to respond. "
+            f"This may happen on the first request while downloading the dataset (158MB). "
+            f"Please wait a few minutes and try again."
+        )
     except requests.exceptions.ConnectionError:
-        raise Exception(f"Connection error: Could not connect to {url}")
+        raise Exception(
+            f"Connection error: Could not connect to {url}. "
+            f"Please verify the backend URL is correct and the server is running."
+        )
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 404:
+        status_code = e.response.status_code if e.response else None
+        if status_code == 404:
             raise Exception(f"Not found: Endpoint {endpoint} does not exist")
-        elif e.response.status_code == 500:
-            raise Exception(f"Server error: The backend encountered an error")
+        elif status_code == 500:
+            raise Exception(
+                f"Server error: The backend encountered an error. "
+                f"This may occur during initial data loading. Please try again in a few moments."
+            )
+        elif status_code == 502:
+            raise Exception(
+                f"Bad Gateway (502): The backend server is not responding. "
+                f"This may happen if: (1) The backend is starting up and loading data, "
+                f"(2) The backend crashed, or (3) There's a network issue. "
+                f"Please check the backend status and try again in a few minutes."
+            )
         else:
-            raise Exception(f"HTTP error {e.response.status_code}: {e.response.text}")
+            error_text = e.response.text[:200] if e.response else str(e)
+            raise Exception(f"HTTP error {status_code}: {error_text}")
     except requests.exceptions.RequestException as e:
         raise Exception(f"Request failed: {str(e)}")
 
@@ -69,15 +92,15 @@ def test_connection(backend_url: str) -> tuple[bool, str]:
         Tuple of (success: bool, message: str)
     """
     try:
-        response = requests.get(f"{backend_url.rstrip('/')}/health", timeout=5)
+        response = requests.get(f"{backend_url.rstrip('/')}/health", timeout=10)
         if response.status_code == 200:
             return True, "✅ Connection successful!"
         else:
             return False, f"⚠️ Server responded with status {response.status_code}"
     except requests.exceptions.Timeout:
-        return False, "❌ Connection timeout"
+        return False, "❌ Connection timeout - Backend may be loading data. Please wait and try again."
     except requests.exceptions.ConnectionError:
-        return False, "❌ Could not connect to server"
+        return False, f"❌ Could not connect to {backend_url}. Please verify the URL is correct."
     except Exception as e:
         return False, f"❌ Error: {str(e)}"
 
