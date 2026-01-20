@@ -79,7 +79,18 @@ def get_merged_aadhaar_dataframe() -> pd.DataFrame:
     - Supports both local file paths and URLs (including Hugging Face datasets).
     """
     # pd.read_csv handles both local paths and URLs
-    df = pd.read_csv(MERGED_AADHAAR_CSV)
+    # For large files from URLs, use chunking to avoid memory issues
+    try:
+        if isinstance(MERGED_AADHAAR_CSV, str) and MERGED_AADHAAR_CSV.startswith("http"):
+            # For URL downloads, read in chunks for large files (158MB)
+            chunk_list = []
+            for chunk in pd.read_csv(MERGED_AADHAAR_CSV, chunksize=50000):
+                chunk_list.append(chunk)
+            df = pd.concat(chunk_list, ignore_index=True)
+        else:
+            df = pd.read_csv(MERGED_AADHAAR_CSV)
+    except Exception as e:
+        raise DataValidationError(f"Failed to load dataset from {MERGED_AADHAAR_CSV}: {str(e)}") from e
 
     if "date" in df.columns:
         df["date"] = pd.to_datetime(df["date"], dayfirst=True, errors="coerce")
@@ -122,8 +133,15 @@ def get_dataset() -> pd.DataFrame:
             raise FileNotFoundError(f"Data file not found at path: {path}")
         df = pd.read_csv(path)
     else:
-        # It's a URL - read directly from URL
-        df = pd.read_csv(data_source)
+        # It's a URL - read directly from URL with chunking for large files
+        try:
+            # For large URL files, read in chunks (158MB file)
+            chunk_list = []
+            for chunk in pd.read_csv(data_source, chunksize=50000):
+                chunk_list.append(chunk)
+            df = pd.concat(chunk_list, ignore_index=True)
+        except Exception as e:
+            raise DataValidationError(f"Failed to load dataset from {data_source}: {str(e)}") from e
 
     _validate_non_empty(df)
     _validate_columns(df)
