@@ -42,17 +42,28 @@ def _validate_non_empty(df: pd.DataFrame) -> None:
         raise DataValidationError("Dataset is empty after loading.")
 
 
-def _convert_huggingface_url(url: str) -> str:
-    """Convert Hugging Face blob URL to raw/resolve URL for direct download."""
-    if "huggingface.co" in url and "/blob/" in url:
-        return url.replace("/blob/", "/resolve/")
+def _convert_to_hf_protocol(url: str) -> str:
+    """Convert Hugging Face URL to hf:// protocol format."""
+    if "huggingface.co" in url:
+        # Extract dataset path from URL
+        # e.g., https://huggingface.co/datasets/mrmarvelous/aadharclean/resolve/main/merged_aadhaar_data_sample.csv
+        # becomes: hf://datasets/mrmarvelous/aadharclean/merged_aadhaar_data_sample.csv
+        if "/datasets/" in url:
+            parts = url.split("/datasets/")
+            if len(parts) > 1:
+                dataset_path = parts[1].split("/resolve/")[0] if "/resolve/" in parts[1] else parts[1].split("/blob/")[0]
+                filename = url.split("/")[-1]
+                return f"hf://datasets/{dataset_path}/{filename}"
     return url
 
 
 def _get_data_source(source: Union[str, Path]) -> Union[str, Path]:
-    """Get the data source, converting Hugging Face URLs if needed."""
-    if isinstance(source, str) and source.startswith("http"):
-        return _convert_huggingface_url(source)
+    """Get the data source, converting Hugging Face URLs to hf:// protocol if needed."""
+    if isinstance(source, str):
+        if source.startswith("hf://"):
+            return source
+        elif source.startswith("http") and "huggingface.co" in source:
+            return _convert_to_hf_protocol(source)
     return source
 
 
@@ -63,7 +74,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = REPO_ROOT / "backend" / "app" / "data"
 _MERGED_CSV_ENV = os.environ.get("AADHAAR_MERGED_CSV")
 _MERGED_CSV_SOURCE = _MERGED_CSV_ENV if _MERGED_CSV_ENV else (
-    "https://huggingface.co/datasets/mrmarvelous/aadharclean/resolve/main/merged_aadhaar_data_sample.csv"
+    "hf://datasets/mrmarvelous/aadharclean/merged_aadhaar_data_sample.csv"
 )
 MERGED_AADHAAR_CSV = _get_data_source(_MERGED_CSV_SOURCE)
 
@@ -78,17 +89,10 @@ def get_merged_aadhaar_dataframe() -> pd.DataFrame:
     - Adds `month` column as YYYY-MM
     - Supports both local file paths and URLs (including Hugging Face datasets).
     """
-    # pd.read_csv handles both local paths and URLs
-    # For large files from URLs, use chunking to avoid memory issues
+    # pd.read_csv supports hf:// protocol for Hugging Face datasets
+    # This is more efficient than downloading via HTTP
     try:
-        if isinstance(MERGED_AADHAAR_CSV, str) and MERGED_AADHAAR_CSV.startswith("http"):
-            # For URL downloads, read in chunks for large files (158MB)
-            chunk_list = []
-            for chunk in pd.read_csv(MERGED_AADHAAR_CSV, chunksize=50000):
-                chunk_list.append(chunk)
-            df = pd.concat(chunk_list, ignore_index=True)
-        else:
-            df = pd.read_csv(MERGED_AADHAAR_CSV)
+        df = pd.read_csv(MERGED_AADHAAR_CSV)
     except Exception as e:
         raise DataValidationError(f"Failed to load dataset from {MERGED_AADHAAR_CSV}: {str(e)}") from e
 
@@ -127,19 +131,15 @@ def get_dataset() -> pd.DataFrame:
     data_source = _get_data_source(settings.data_file)
     
     # Check if it's a local file path
-    if isinstance(data_source, Path) or (isinstance(data_source, str) and not data_source.startswith("http")):
+    if isinstance(data_source, Path) or (isinstance(data_source, str) and not data_source.startswith(("http", "hf://"))):
         path = Path(data_source)
         if not path.exists():
             raise FileNotFoundError(f"Data file not found at path: {path}")
         df = pd.read_csv(path)
     else:
-        # It's a URL - read directly from URL with chunking for large files
+        # It's a URL or hf:// protocol - pd.read_csv handles both
         try:
-            # For large URL files, read in chunks (158MB file)
-            chunk_list = []
-            for chunk in pd.read_csv(data_source, chunksize=50000):
-                chunk_list.append(chunk)
-            df = pd.concat(chunk_list, ignore_index=True)
+            df = pd.read_csv(data_source)
         except Exception as e:
             raise DataValidationError(f"Failed to load dataset from {data_source}: {str(e)}") from e
 
