@@ -22,5 +22,5 @@ EXPOSE 8001
 ENV PYTHONPATH=/app
 
 # Render provides $PORT; locally default to 8001
-CMD ["sh", "-c", "hypercorn backend.app.main:app --bind 0.0.0.0:${PORT:-8000}"]
+CMD ["sh", "-c", "hypercorn backend.app.main:app --bind 0.0.0.0:${PORT:-8001}"]
 
