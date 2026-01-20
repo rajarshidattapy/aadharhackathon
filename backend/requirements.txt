@@ -6,4 +6,5 @@ pydantic
 joblib
 catboost; python_version < "3.13"
 python-dotenv
-
+uvicorn
+joblib
