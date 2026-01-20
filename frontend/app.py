@@ -14,6 +14,14 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+try:
+    # Optional: allow local `frontend/.env` (rename from env.example)
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except Exception:
+    pass
+
 from components.api_client import test_connection, clear_cache, get_backend_url
 from components.theme import apply_custom_css
 

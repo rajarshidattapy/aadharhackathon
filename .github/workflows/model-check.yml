@@ -2,14 +2,14 @@ name: Model checks
 on:
   push:
     paths:
-      - 'models/**'
-      - 'scripts/**'
-      - 'tests/**'
+      - 'backend/models/**'
+      - 'backend/scripts/**'
+      - 'backend/tests/**'
   pull_request:
     paths:
-      - 'models/**'
-      - 'scripts/**'
-      - 'tests/**'
+      - 'backend/models/**'
+      - 'backend/scripts/**'
+      - 'backend/tests/**'
 
 jobs:
   test:

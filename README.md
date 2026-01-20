@@ -32,7 +32,7 @@ pip install -r requirements.txt
 From the repository root, run:
 
 ```bash
-python -m uidai_pipeline.cli \
+python -m backend.uidai_pipeline.cli \
   --enrol-dir api_data_aadhar_enrolment \
   --demo-dir api_data_aadhar_demographic \
   --bio-dir api_data_aadhar_biometric \
@@ -42,7 +42,7 @@ python -m uidai_pipeline.cli \
 All arguments have sensible defaults, so this is equivalent to:
 
 ```bash
-python -m uidai_pipeline.cli
+python -m backend.uidai_pipeline.cli
 ```
 
 The script will print the final DataFrame shape and the output file path.

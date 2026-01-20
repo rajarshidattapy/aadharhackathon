@@ -1,0 +1,9 @@
+fastapi
+hypercorn
+pandas
+numpy
+pydantic
+joblib
+catboost; python_version < "3.13"
+python-dotenv
+
