@@ -274,6 +274,14 @@ try:
 
                 if selected_location:
                     location_data = critical_df_display[critical_df_display["location"] == selected_location].iloc[0]
+                    total_load_val = location_data.get("total_load")
+                    stress_score_val = location_data.get("stress_score")
+                    total_load_text = (
+                        f"{total_load_val:,.0f}" if isinstance(total_load_val, (int, float)) else "N/A"
+                    )
+                    stress_score_text = (
+                        f"{stress_score_val:.2f}" if isinstance(stress_score_val, (int, float)) else "N/A"
+                    )
 
                     col1, col2 = st.columns(2)
 
@@ -285,8 +293,8 @@ try:
                                 <li><strong>State:</strong> {location_data.get('state', 'N/A')}</li>
                                 <li><strong>District:</strong> {location_data.get('district', 'N/A')}</li>
                                 <li><strong>Pincode:</strong> {location_data.get('pincode', 'N/A')}</li>
-                                <li><strong>Total Load:</strong> {location_data.get('total_load', 'N/A'):,.0f if isinstance(location_data.get('total_load'), (int, float)) else 'N/A'}</li>
-                                <li><strong>Stress Score:</strong> {location_data.get('stress_score', 'N/A'):.2f if isinstance(location_data.get('stress_score'), (int, float)) else 'N/A'}</li>
+                                <li><strong>Total Load:</strong> {total_load_text}</li>
+                                <li><strong>Stress Score:</strong> {stress_score_text}</li>
                                 <li><strong>Tier:</strong> <span style="color: red; font-weight: bold;">CRITICAL</span></li>
                             </ul>
                         </div>

@@ -1,3 +1,7 @@
+venv/
+.idea/
+data/
+data/my_merged_uidai.csv
 .venv/
 .idea/
 .env
@@ -7,3 +11,9 @@ api_data_aadhar_demographic/
 api_data_aadhar_enrolment/
 data/merged_aadhaar_data_sample.csv
 my_merged_uidai.csv
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+frontend/venv/
+backend/venv/

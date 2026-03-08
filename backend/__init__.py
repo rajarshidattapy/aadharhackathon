@@ -1,2 +1,2 @@
-"""Backend package (FastAPI API + data pipeline + models)."""
+"""FastAPI application package."""
 

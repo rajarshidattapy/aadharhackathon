@@ -241,6 +241,10 @@ try:
 
         if selected_district:
             district_data = df[df["district"] == selected_district].iloc[0]
+            inflow_score = district_data.get("inflow_score")
+            inflow_score_text = (
+                f"{inflow_score:.2f}" if isinstance(inflow_score, (int, float)) else "N/A"
+            )
 
             col1, col2 = st.columns(2)
 
@@ -252,7 +256,7 @@ try:
                         <li><strong>State:</strong> {district_data.get('state', 'N/A')}</li>
                         <li><strong>District:</strong> {district_data.get('district', 'N/A')}</li>
                         <li><strong>Month:</strong> {district_data.get('month', 'N/A')}</li>
-                        <li><strong>Inflow Score:</strong> {district_data.get('inflow_score', 'N/A'):.2f if isinstance(district_data.get('inflow_score'), (int, float)) else 'N/A'}</li>
+                        <li><strong>Inflow Score:</strong> {inflow_score_text}</li>
                         <li><strong>Level:</strong> <span style="color: {'red' if district_data.get('level', '').upper() == 'SURGE' else 'orange' if district_data.get('level', '').upper() == 'HEAVY' else 'green'}; font-weight: bold;">{district_data.get('level', 'N/A')}</span></li>
                     </ul>
                 </div>

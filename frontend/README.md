@@ -6,7 +6,7 @@
 ```bash
 # from the repository root
 pip install -r backend/requirements.txt
-hypercorn backend.app.main:app --bind 0.0.0.0:8001
+hypercorn backend.main:app --bind 0.0.0.0:8001
 ```
 
 ### 2. Run the Streamlit Dashboard

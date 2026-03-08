@@ -3,9 +3,8 @@
 ## Local run
 
 ```bash
-cd backend
-pip install -r requirements.txt
-hypercorn backend.app.main:app --bind 0.0.0.0:8001
+pip install -r backend/requirements.txt
+hypercorn backend.main:app --bind 0.0.0.0:8001
 ```
 
 Optional env vars (copy `backend/env.example` to `.env` locally):

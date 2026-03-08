@@ -10,6 +10,7 @@ Run with: streamlit run app.py
 import streamlit as st
 import os
 import sys
+from datetime import date
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -58,6 +59,20 @@ if "top_n" not in st.session_state:
     st.session_state.top_n = 10
 
 
+def get_recent_month_options(count: int = 24) -> list[str]:
+    """Return a reverse-chronological list of YYYY-MM strings."""
+    y = date.today().year
+    m = date.today().month
+    months: list[str] = []
+    for _ in range(count):
+        months.append(f"{y:04d}-{m:02d}")
+        m -= 1
+        if m == 0:
+            y -= 1
+            m = 12
+    return months
+
+
 def render_sidebar():
     """Render the global sidebar controls."""
     with st.sidebar:
@@ -97,7 +112,7 @@ def render_sidebar():
 
         # Month selector
         st.subheader("📅 Time Period")
-        month_options = ["Latest", "2026-01", "2025-12", "2025-11", "2025-10", "2025-09", "2025-08"]
+        month_options = ["Latest"] + get_recent_month_options(24)
         st.session_state.selected_month = st.selectbox(
             "Select Month",
             options=month_options,

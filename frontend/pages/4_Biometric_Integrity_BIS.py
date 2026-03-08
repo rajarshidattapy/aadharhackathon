@@ -364,9 +364,9 @@ try:
                                 <li><strong>State:</strong> {location_data.get('state', 'N/A')}</li>
                                 <li><strong>District:</strong> {location_data.get('district', 'N/A')}</li>
                                 <li><strong>Pincode:</strong> {location_data.get('pincode', 'N/A')}</li>
-                                <li><strong>Enrollment Total:</strong> {location_data.get('enrol_total', 'N/A'):,.0f if isinstance(location_data.get('enrol_total'), (int, float)) else 'N/A'}</li>
-                                <li><strong>Biometric Total:</strong> {location_data.get('bio_total', 'N/A'):,.0f if isinstance(location_data.get('bio_total'), (int, float)) else 'N/A'}</li>
-                                <li><strong>Capture Gap Ratio:</strong> {location_data.get('capture_gap_ratio', 'N/A'):.4f if isinstance(location_data.get('capture_gap_ratio'), (int, float)) else 'N/A'}</li>
+                                <li><strong>Enrollment Total:</strong> {location_data.get('enrol_total', 'N/A')}</li>
+                                <li><strong>Biometric Total:</strong> {location_data.get('bio_total', 'N/A')}</li>
+                                <li><strong>Capture Gap Ratio:</strong> {location_data.get('capture_gap_ratio', 'N/A')}</li>
                             </ul>
                         </div>
                         """, unsafe_allow_html=True)
@@ -380,7 +380,7 @@ try:
                             <h4>⚠️ Imbalance Status</h4>
                             <ul>
                                 <li><strong>Imbalance Tier:</strong> <span style="color: {tier_color}; font-weight: bold;">{imbalance_tier}</span></li>
-                                <li><strong>Imbalance Score:</strong> {location_data.get('imbalance_score', 'N/A'):.4f if isinstance(location_data.get('imbalance_score'), (int, float)) else 'N/A'}</li>
+                                <li><strong>Imbalance Score:</strong> {location_data.get('imbalance_score', 'N/A')}</li>
                             </ul>
                         </div>
                         """, unsafe_allow_html=True)
@@ -422,4 +422,5 @@ try:
 
 except Exception as e:
     display_error_with_retry(str(e), "biometric_retry")
+
 
